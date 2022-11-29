@@ -1,0 +1,7 @@
+{
+	"0.1.0a": {
+		"update_type": "Patch",
+		"title": "Development Stage",
+		"description": "Initial Dergie development, currently working on Auto-Mod and Moderation features, with some work on the general back-end."
+	}
+}
