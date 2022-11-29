@@ -38,8 +38,7 @@ Your recent message in `{message.guild.name}` has been deleted as it was determi
 Please review what you are sending and try again!
 Detected dangerous URLs: {", ".join([x["domain"] for x in urls])}
 
-If you think this is a false positive, please submit an issue at {Details.issues}""")
-
+If you think this is a false positive, please open a ticket in the support server: {Details.support_url}""")
 
 		return
 
