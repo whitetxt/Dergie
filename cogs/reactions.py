@@ -11,6 +11,10 @@ class Reactions(commands.Cog):
 	def __init__(self, bot: discord.AutoShardedBot):
 		self.bot = bot
 
+	@commands.slash_command()
+	async def create_reaction_role(self, ctx: discord.ApplicationContext, message_):
+		return
+
 	@commands.Cog.listener()
 	@commands.guild_only()
 	async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
@@ -36,6 +40,34 @@ class Reactions(commands.Cog):
 			try:
 				payload.member.add_roles(role_id, reason=f"Reaction Role - Message ID {payload.message_id}")
 				await payload.member.send(f"{Emojis.tick} Role `{role.name}` added!")
+			except (discord.HTTPException, discord.Forbidden):
+				pass
+	
+	@commands.Cog.listener()
+	@commands.guild_only()
+	async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+		if payload.member.bot: return
+		guild = self.bot.get_guild(payload.guild_id)
+		if guild is None: return
+
+		emoji = payload.emoji.name
+		if emoji is None: return
+
+		db = sqlite3.connect(os.path.join("databases", "reaction_roles.db"))
+		cur = db.cursor()
+		result = cur.execute("SELECT role_id FROM reaction_roles WHERE message_id = ? AND emoji_id = ?", (payload.message_id, emoji)).fetchone()
+		print(result)
+
+		if len(result) == 0: return
+
+		role_id = result[0][0]
+		role = guild.get_role(role_id)
+		if role is None: return
+
+		if payload.member.get_role(role_id) is not None:
+			try:
+				payload.member.remove_roles(role_id, reason=f"Reaction Role - Message ID {payload.message_id}")
+				await payload.member.send(f"{Emojis.tick} Role `{role.name}` removed!")
 			except (discord.HTTPException, discord.Forbidden):
 				pass
 
