@@ -123,6 +123,7 @@ lines = [line for line in lines if not line.startswith("#") and line != ""]
 if len(lines) == 0:
 	print("No token found.")
 	sys.exit(0)
+token = lines[0]
 
 bot.run(token)
 

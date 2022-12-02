@@ -24,7 +24,7 @@ class Help(commands.Cog):
 
 	@commands.slash_command()
 	async def help(self, ctx: discord.ApplicationContext):
-		"""Opens the help menu."""
+		"""Opens the help menu (duh)."""
 		raw_cogs = dict(self.bot.cogs)
 		cogs = {}
 		for cog_name, cog in raw_cogs.items():
