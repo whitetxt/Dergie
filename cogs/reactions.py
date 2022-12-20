@@ -11,8 +11,28 @@ class Reactions(commands.Cog):
 	def __init__(self, bot: discord.AutoShardedBot):
 		self.bot = bot
 
-	@commands.slash_command()
-	async def create_reaction_role(self, ctx: discord.ApplicationContext, message_):
+	@commands.slash_command(help="Creates a reaction role on a message, ")
+	async def create_reaction_role(	self, ctx: discord.ApplicationContext, emoji: discord.Option(str, description="The emoji to use as the reaction", required=True), \
+									message_content: discord.Option(str, description="Message content, leave blank to use existing message") = None):
+		db = sqlite3.connect(os.path.join("databases", "reaction_roles.db"))
+		cur = db.cursor()
+		if message_content is None:
+			await ctx.respond("Please reply to the message, or send a link to the message to add a reaction role to.")
+			message = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author)
+			if message.reference is None:
+				if not message.content.startswith("https://discord.com/channels"):
+					await ctx.send(f"{Emojis.failure} You didn't reply to a message or give a link.")
+					return
+				else:
+					m_id = int(message.content.split("/")[-1])
+			else:
+				m_id = int(message.reference.message_id)
+			message = self.bot.get_message(m_id)
+			if message is None:
+				await ctx.send(f"{Emojis.failure} Couldn't find message with ID {m_id}, maybe I don't have permissions to see the channel?")
+				return
+			async with ctx.typing():
+				await message.add_reaction(emoji)
 		return
 
 	@commands.Cog.listener()
@@ -39,7 +59,7 @@ class Reactions(commands.Cog):
 		if payload.member.get_role(role_id) is None:
 			try:
 				payload.member.add_roles(role_id, reason=f"Reaction Role - Message ID {payload.message_id}")
-				await payload.member.send(f"{Emojis.tick} Role `{role.name}` added!")
+				await payload.member.send(f"{Emojis.success} Role `{role.name}` added!")
 			except (discord.HTTPException, discord.Forbidden):
 				pass
 	
@@ -67,7 +87,7 @@ class Reactions(commands.Cog):
 		if payload.member.get_role(role_id) is not None:
 			try:
 				payload.member.remove_roles(role_id, reason=f"Reaction Role - Message ID {payload.message_id}")
-				await payload.member.send(f"{Emojis.tick} Role `{role.name}` removed!")
+				await payload.member.send(f"{Emojis.success} Role `{role.name}` removed!")
 			except (discord.HTTPException, discord.Forbidden):
 				pass
 

@@ -33,7 +33,7 @@ class AutoMod(commands.Cog):
 		if urls is not None:
 			urls = [url for url in urls if url not in self.url_overrides]
 			await message.delete()
-			await message.author.send(f"""{Emojis.cross} Dergie Warning! {Emojis.cross}
+			await message.author.send(f"""{Emojis.failure} Dergie Warning! {Emojis.failure}
 Your recent message in `{message.guild.name}` has been deleted as it was determined to have a dangerous URL in it.
 Please review what you are sending and try again!
 Detected dangerous URLs: {", ".join([x["domain"] for x in urls])}
@@ -45,7 +45,7 @@ If you think this is a false positive, please open a ticket in the support serve
 	def check_bad_urls(self, message: discord.Message):
 		urls = re.findall("(?:[A-z0-9](?:[A-z0-9-]{0,61}[A-z0-9])?\.)+[A-z0-9][A-z0-9-]{0,61}[A-z0-9]", message.content)
 		if len(urls) == 0: return None
-		req = requests.post("https://anti-fish.bitflow.dev/check", {"message": message.content})
+		req = requests.post("https://anti-fish.bitflow.dev/check", json={"message": message.content})
 		if req.status_code != 200:
 			if req.status_code != 404:
 				print(f"Unknown return from anti-fish:\n{req.status_code} - {req.content}")

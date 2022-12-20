@@ -88,6 +88,7 @@ class Settings:
 		for table, ddl in expected_tables.items():
 			if table not in table_names:
 				cursor.execute(ddl)
+				db.commit()
 		
 		# Load settings for each server
 		for server in cursor.execute("SELECT server_id FROM servers").fetchall():
@@ -120,7 +121,4 @@ class Settings:
 
 	@classmethod
 	def get_settings(cls, guild_id: int) -> ServerSettings | None:
-		if guild_id not in cls.server_settings[guild_id]:
-			return None
-
-		return cls.server_settings[guild_id]
+		return cls.server_settings.get(guild_id)

@@ -2,6 +2,8 @@ import discord, time, sys, os, traceback
 from discord.ext import commands, tasks
 from utils.config import Config
 from utils.settings import Settings
+from utils.status import send_status_message
+from utils.helpers import *
 
 _restart_bot_at_shutdown = False
 
@@ -31,6 +33,10 @@ async def change_presence():
 		cur_status = 0
 	await bot.change_presence(status=discord.Status.online, activity=statuses[cur_status])
 
+@tasks.loop(minutes=1)
+async def send_status():
+	await send_status_message(bot.get_message(1054881101048451122))
+
 @bot.slash_command()
 @commands.is_owner()
 async def shutdown(ctx):
@@ -48,6 +54,21 @@ async def restart(ctx):
 	await bot.change_presence(status=discord.Status.idle)
 	await bot.close()
 	_restart_bot_at_shutdown = True
+
+@bot.slash_command()
+@commands.is_owner()
+async def send_message(ctx, channel: discord.Option(str, "Channel ID") = None, content: discord.Option(str, "Message Content") = "Content!"):
+	if channel is None or not channel.isnumeric():
+		await ctx.respond(f"{Emojis.failure} Invalid channel ID.")
+		return
+	channel = int(channel)
+	chan = bot.get_channel(channel)
+	if chan is None:
+		await ctx.respond(f"{Emojis.failure} Channel not found.")
+		return
+
+	await chan.send(content)
+	await ctx.respond(f"{Emojis.success} Message sent!")
 
 IgnoreImport = []
 
@@ -110,6 +131,7 @@ async def on_ready():
 	bot.config = Config(bot)
 	bot.settings = Settings(bot)
 	change_presence.start()
+	send_status.start()
 	print(f"Startup took: {time.time() - start_time:.03f}s")
 	print(f"Logged in as: {bot.user.name}#{bot.user.discriminator}")
 
