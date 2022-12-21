@@ -50,7 +50,7 @@ class Reactions(commands.Cog):
 		result = cur.execute("SELECT role_id FROM reaction_roles WHERE message_id = ? AND emoji_id = ?", (payload.message_id, emoji)).fetchone()
 		print(result)
 
-		if len(result) == 0: return
+		if result is None or len(result) == 0: return
 
 		role_id = result[0][0]
 		role = guild.get_role(role_id)
@@ -66,7 +66,12 @@ class Reactions(commands.Cog):
 	@commands.Cog.listener()
 	@commands.guild_only()
 	async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
-		if payload.member.bot: return
+		member = self.bot.get_user(payload.user_id)
+		if member is None:
+			member = await self.bot.fetch_user(payload.user_id)
+			if member is None:
+				return
+		if member.bot: return
 		guild = self.bot.get_guild(payload.guild_id)
 		if guild is None: return
 
@@ -78,16 +83,16 @@ class Reactions(commands.Cog):
 		result = cur.execute("SELECT role_id FROM reaction_roles WHERE message_id = ? AND emoji_id = ?", (payload.message_id, emoji)).fetchone()
 		print(result)
 
-		if len(result) == 0: return
+		if result is None or len(result) == 0: return
 
 		role_id = result[0][0]
 		role = guild.get_role(role_id)
 		if role is None: return
 
-		if payload.member.get_role(role_id) is not None:
+		if member.get_role(role_id) is not None:
 			try:
-				payload.member.remove_roles(role_id, reason=f"Reaction Role - Message ID {payload.message_id}")
-				await payload.member.send(f"{Emojis.success} Role `{role.name}` removed!")
+				member.remove_roles(role_id, reason=f"Reaction Role - Message ID {payload.message_id}")
+				await member.send(f"{Emojis.success} Role `{role.name}` removed!")
 			except (discord.HTTPException, discord.Forbidden):
 				pass
 

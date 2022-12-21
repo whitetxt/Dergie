@@ -11,9 +11,8 @@ start_time = time.time()
 
 statuses = [
 	discord.Activity(type=discord.ActivityType.playing, name="with you"),
-	discord.Activity(type=discord.ActivityType.watching, name="you"),
-	discord.Activity(type=discord.ActivityType.listening, name="your walls"),
-	discord.Activity(type=discord.ActivityType.competing, name="doing your mom contest")
+	discord.Activity(type=discord.ActivityType.watching, name=f"{Status.members} users"),
+	discord.Activity(type=discord.ActivityType.watching, name=f"{Status.servers} servers")
 ]
 
 cur_status = 0
@@ -27,7 +26,12 @@ bot = discord.AutoShardedBot(	owner_id=112633269010300928,
 
 @tasks.loop(minutes=1)
 async def change_presence():
-	global cur_status
+	global cur_status, statuses
+	statuses = [
+		discord.Activity(type=discord.ActivityType.playing, name="with you"),
+		discord.Activity(type=discord.ActivityType.watching, name=f"{Status.members} users"),
+		discord.Activity(type=discord.ActivityType.watching, name=f"{Status.servers} servers")
+	]
 	cur_status += 1
 	if cur_status == len(statuses):
 		cur_status = 0
