@@ -2,7 +2,7 @@ import discord, time, sys, os, traceback
 from discord.ext import commands, tasks
 from utils.config import Config
 from utils.settings import Settings
-from utils.status import send_status_message
+from utils.status import *
 from utils.helpers import *
 
 _restart_bot_at_shutdown = False
@@ -33,9 +33,13 @@ async def change_presence():
 		cur_status = 0
 	await bot.change_presence(status=discord.Status.online, activity=statuses[cur_status])
 
-@tasks.loop(minutes=1)
+@tasks.loop(seconds=5)
 async def send_status():
-	await send_status_message(bot.get_message(1054881101048451122))
+	Status.servers = len(bot.guilds)
+	Status.members = len(bot.users)
+	Status.ping = round(bot.latency * 1000, 2)
+	Status.status = "Working Normally"
+	await send_status_message(await bot.get_channel(870802822600462357).fetch_message(1054881101048451122))
 
 @bot.slash_command()
 @commands.is_owner()
