@@ -6,7 +6,7 @@ class General(commands.Cog):
 		self.bot = bot
 
 	@commands.slash_command(description="Gets the bot's current ping.")
-	async def ping(self, ctx):
+	async def ping(self, ctx: discord.ApplicationContext):
 		"""
 		Responds with the bot's current ping.
 		"""
