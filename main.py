@@ -15,7 +15,7 @@ statuses = [
 	discord.Activity(type=discord.ActivityType.watching, name=f"{Status.servers} servers")
 ]
 
-cur_status = 0
+cur_status = -1
 
 intents = discord.Intents.all()
 bot = discord.Bot(	owner_id=112633269010300928,
@@ -183,10 +183,20 @@ async def on_ready():
 	start_time = time.time()
 	bot.config = Config(bot)
 	bot.settings = Settings(bot)
-	change_presence.start()
 	send_status.start()
+	change_presence.start()
 	print(f"Startup took: {time.time() - start_time:.03f}s")
 	print(f"Logged in as: {bot.user.name}#{bot.user.discriminator}")
+	start_time = time.time()
+
+@commands.Cog.listener()
+async def on_application_command_error(self, ctx: discord.ApplicationContext, error: discord.DiscordException):
+	if isinstance(error, commands.NotOwner):
+		await ctx.respond(f"{Emojis.failure} You can't use this command!")
+	elif isinstance(error, commands.MissingPermissions):
+		await ctx.respond(f"{Emojis.failure} You don't have the required permissions for this command!")
+	else:
+		await ctx.respond(f"{Emojis.failure} Uh oh! An unknown error has occurred! Please report this at {Details.bug_report_url}")
 
 # Testing Bot
 start_time = time.time()
