@@ -10,7 +10,7 @@ def changelog_versions(self, ctx: discord.AutocompleteContext):
 	return versions
 
 class Help(commands.Cog):
-	def __init__(self, bot: discord.AutoShardedBot):
+	def __init__(self, bot: discord.Bot):
 		self.bot = bot
 		self.ignored_cogs = []
 

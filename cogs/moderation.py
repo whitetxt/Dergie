@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.commands import Option
 
 class Moderation(commands.Cog):
-	def __init__(self, bot: discord.AutoShardedBot):
+	def __init__(self, bot: discord.Bot):
 		self.bot = bot
 
 	@commands.slash_command(description="Kicks a member.")

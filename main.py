@@ -1,4 +1,4 @@
-import discord, time, sys, os, traceback
+import discord, time, sys, os, traceback, json
 from discord.ext import commands, tasks
 from utils.config import Config
 from utils.settings import Settings
@@ -18,11 +18,11 @@ statuses = [
 cur_status = 0
 
 intents = discord.Intents.all()
-bot = discord.AutoShardedBot(	owner_id=112633269010300928,
-								intents=intents,
-								status=statuses[0],
-								debug_guilds=[692513145880576020]
-							)
+bot = discord.Bot(	owner_id=112633269010300928,
+					intents=intents,
+					status=statuses[0],
+					debug_guilds=[692513145880576020, 1054875370924548167]
+				)
 
 @tasks.loop(minutes=1)
 async def change_presence():
@@ -43,7 +43,16 @@ async def send_status():
 	Status.members = len(bot.users)
 	Status.ping = round(bot.latency * 1000, 2)
 	Status.status = "Working Normally"
-	await send_status_message(await bot.get_channel(870802822600462357).fetch_message(1054881101048451122))
+	channel = bot.get_channel(1058507701946167398)
+	if channel is None:
+		print("Failed to get status channel.")
+		return
+	try:
+		msg = await channel.fetch_message(1058508654694891551)
+	except:
+		print("Failed to get status message.")
+		return
+	await send_status_message(msg)
 
 @bot.slash_command()
 @commands.is_owner()
@@ -76,6 +85,42 @@ async def send_message(ctx, channel: discord.Option(str, "Channel ID") = None, c
 		return
 
 	await chan.send(content)
+	await ctx.respond(f"{Emojis.success} Message sent!")
+
+@bot.slash_command()
+@commands.is_owner()
+async def send_embed(ctx, channel: discord.Option(str, "Channel ID") = None, embed: discord.Option(str, "Embed, in JSON") = None):
+	if channel is None or not channel.isnumeric():
+		await ctx.respond(f"{Emojis.failure} Invalid channel ID.")
+		return
+	if embed is None:
+		await ctx.respond(f"{Emojis.failure} You need to give me something to send!")
+		return
+	channel = int(channel)
+	chan = bot.get_channel(channel)
+	if chan is None:
+		await ctx.respond(f"{Emojis.failure} Channel not found.")
+		return
+
+	try:
+		data = json.loads(embed)
+	except json.JSONDecodeError:
+		await ctx.respond(f"{Emojis.failure} Invalid JSON.")
+		return
+	
+	content = ""
+	if "content" in data:
+		content = data["content"]
+	
+	embeds = []
+	if "embeds" in data:
+		for embed in data["embeds"]:
+			emb = discord.Embed(title=embed["title"], description=embed["description"], color=discord.Color(embed["color"]))
+			for field in embed["fields"]:
+				emb.add_field(name=field["name"], value=field["value"], inline=field["inline"])
+			embeds.append(emb)
+
+	await chan.send(content, embeds=embeds)
 	await ctx.respond(f"{Emojis.success} Message sent!")
 
 IgnoreImport = []

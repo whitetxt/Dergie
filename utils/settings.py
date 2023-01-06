@@ -55,13 +55,13 @@ class ServerSettings:
 		db.close()
 
 class Settings:
-	bot: discord.AutoShardedBot
+	bot: discord.Bot
 
 	database_path: str = ""
 
 	server_settings: Dict[int, ServerSettings] = {}
 
-	def __init__(self, bot: discord.AutoShardedBot):
+	def __init__(self, bot: discord.Bot):
 		self.bot = bot
 		self.database_path = os.path.join("databases", "settings.db")
 		# Perform initial database structure check.

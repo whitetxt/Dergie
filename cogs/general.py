@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 class General(commands.Cog):
-	def __init__(self, bot: discord.AutoShardedBot):
+	def __init__(self, bot: discord.Bot):
 		self.bot = bot
 
 	@commands.slash_command(description="Gets the bot's current ping.")

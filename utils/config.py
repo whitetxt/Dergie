@@ -6,7 +6,7 @@ from typing import Dict
 from collections import OrderedDict
 
 class Config:
-	bot: discord.AutoShardedBot
+	bot: discord.Bot
 
 	_version: str = ""
 	last_version_update: float = 0.0
@@ -14,7 +14,7 @@ class Config:
 	_changelog: Dict[str, Dict[str, str]] = {}
 	last_changelog_update: float = 0.0
 
-	def __init__(self, bot: discord.AutoShardedBot):
+	def __init__(self, bot: discord.Bot):
 		self.bot = bot
 		with open(os.path.join("config", "version.txt")) as f:
 			self.__class__._version = f.readline().replace("\n", "")

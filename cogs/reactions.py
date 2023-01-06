@@ -6,9 +6,9 @@ from utils.settings import *
 from utils.helpers import *
 
 class Reactions(commands.Cog):
-	bot: discord.AutoShardedBot
+	bot: discord.Bot
 
-	def __init__(self, bot: discord.AutoShardedBot):
+	def __init__(self, bot: discord.Bot):
 		self.bot = bot
 
 	@commands.slash_command(help="Creates a reaction role on a message, ")
