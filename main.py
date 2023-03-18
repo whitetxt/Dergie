@@ -123,7 +123,7 @@ async def send_embed(ctx, channel: discord.Option(str, "Channel ID") = None, emb
 	await chan.send(content, embeds=embeds)
 	await ctx.respond(f"{Emojis.success} Message sent!")
 
-IgnoreImport = []
+IgnoreImport = ["reactions"]
 
 start_time = time.time()
 cogs = lambda: [f.replace('.py', '') for f in os.listdir("cogs") if os.path.isfile(os.path.join("cogs", f))]

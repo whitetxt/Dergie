@@ -12,7 +12,7 @@ def changelog_versions(self, ctx: discord.AutocompleteContext):
 class Help(commands.Cog):
 	def __init__(self, bot: discord.Bot):
 		self.bot = bot
-		self.ignored_cogs = []
+		self.ignored_cogs = ["reactions"]
 
 	def command_names(self, ctx: discord.AutocompleteContext):
 		raw_cogs = dict(self.bot.cogs)
