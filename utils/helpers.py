@@ -6,5 +6,5 @@ class Emojis:
 
 class Details:
     support_url: str = "https://discord.gg/8B5BfM8Szp"
-    owner: str = "EvieUwO#6483"
+    owner: str = "_whitetxt#6483"
     contact_email: str = "N/A"
