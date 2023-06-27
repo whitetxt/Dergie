@@ -74,6 +74,8 @@ async def shutdown(ctx):
     global ret_code
     await ctx.respond("Bye bye QwQ")
     ret_code = 0
+    send_status.cancel()
+    change_presence.cancel()
     await bot.change_presence(status=discord.Status.offline)
     await bot.close()
 
@@ -84,78 +86,13 @@ async def restart(ctx):
     global ret_code
     await ctx.respond("Alright, cya soon ;3")
     ret_code = 1
+    send_status.cancel()
+    change_presence.cancel()
     await bot.change_presence(status=discord.Status.idle)
     await bot.close()
 
 
-@bot.slash_command()
-@commands.is_owner()
-async def send_message(
-    ctx,
-    channel: discord.Option(str, "Channel ID") = None,
-    content: discord.Option(str, "Message Content") = "Content!",
-):
-    if channel is None or not channel.isnumeric():
-        await ctx.respond(f"{Emojis.failure} Invalid channel ID.")
-        return
-    channel = int(channel)
-    chan = bot.get_channel(channel)
-    if chan is None:
-        await ctx.respond(f"{Emojis.failure} Channel not found.")
-        return
-
-    await chan.send(content)
-    await ctx.respond(f"{Emojis.success} Message sent!")
-
-
-@bot.slash_command()
-@commands.is_owner()
-async def send_embed(
-    ctx,
-    channel: discord.Option(str, "Channel ID") = None,
-    embed: discord.Option(str, "Embed, in JSON") = None,
-):
-    if channel is None or not channel.isnumeric():
-        await ctx.respond(f"{Emojis.failure} Invalid channel ID.")
-        return
-    if embed is None:
-        await ctx.respond(f"{Emojis.failure} You need to give me something to send!")
-        return
-    channel = int(channel)
-    chan = bot.get_channel(channel)
-    if chan is None:
-        await ctx.respond(f"{Emojis.failure} Channel not found.")
-        return
-
-    try:
-        data = json.loads(embed)
-    except json.JSONDecodeError:
-        await ctx.respond(f"{Emojis.failure} Invalid JSON.")
-        return
-
-    content = ""
-    if "content" in data:
-        content = data["content"]
-
-    embeds = []
-    if "embeds" in data:
-        for embed in data["embeds"]:
-            emb = discord.Embed(
-                title=embed["title"],
-                description=embed["description"],
-                color=discord.Color(embed["color"]),
-            )
-            for field in embed["fields"]:
-                emb.add_field(
-                    name=field["name"], value=field["value"], inline=field["inline"]
-                )
-            embeds.append(emb)
-
-    await chan.send(content, embeds=embeds)
-    await ctx.respond(f"{Emojis.success} Message sent!")
-
-
-IgnoreImport = ["reactions"]
+ignore_import = ["reactions", "template"]
 
 start_time = time.time()
 cogs = lambda: [
@@ -165,7 +102,7 @@ cogs = lambda: [
 ]
 
 for Extension in cogs():
-    if Extension in IgnoreImport:
+    if Extension in ignore_import:
         continue
     try:
         bot.load_extension(f"cogs.{Extension}")
@@ -175,70 +112,6 @@ for Extension in cogs():
         traceback.print_exc()
 
 print(f"Cog loading took: {time.time() - start_time:.03f}s")
-
-
-def cog_names(ctx: discord.AutocompleteContext):
-    output = []
-    for Extension in cogs():
-        if Extension in IgnoreImport:
-            continue
-        if ctx.value in Extension:
-            output.append(Extension)
-    return output
-
-
-@bot.slash_command()
-@commands.is_owner()
-async def reload(
-    ctx,
-    cog_name: discord.Option(
-        str, description="Name of the cog to reload.", autocomplete=cog_names
-    ),
-):
-    try:
-        bot.reload_extension(f"cogs.{cog_name}")
-        await ctx.respond(f"Reloaded `{cog_name}`")
-    except (
-        discord.ClientException,
-        ModuleNotFoundError,
-    ) as e:
-        await ctx.respond(f"Failed to reload `{cog_name}`\nError: {e}")
-
-
-@bot.slash_command()
-@commands.is_owner()
-async def unload(
-    ctx,
-    cog_name: discord.Option(
-        str, description="Name of the cog to unload.", autocomplete=cog_names
-    ),
-):
-    try:
-        bot.unload_extension(f"cogs.{cog_name}")
-        await ctx.respond(f"Unloaded `{cog_name}`")
-    except (
-        discord.ClientException,
-        ModuleNotFoundError,
-    ) as e:
-        await ctx.respond(f"Failed to unload `{cog_name}`\nError: {e}")
-
-
-@bot.slash_command()
-@commands.is_owner()
-async def load(
-    ctx,
-    cog_name: discord.Option(
-        str, description="Name of the cog to load.", autocomplete=cog_names
-    ),
-):
-    try:
-        bot.load_extension(f"cogs.{cog_name}")
-        await ctx.respond(f"Loaded `{cog_name}`")
-    except (
-        discord.ClientException,
-        ModuleNotFoundError,
-    ) as e:
-        await ctx.respond(f"Failed to load `{cog_name}`\nError: {e}")
 
 
 @bot.event
@@ -269,6 +142,7 @@ async def on_application_command_error(
         await ctx.respond(
             f"{Emojis.failure} Uh oh! An unknown error has occurred! Please report this at {Details.bug_report_url}"
         )
+
 
 start_time = time.time()
 token = ""

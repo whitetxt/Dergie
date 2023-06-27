@@ -1,5 +1,6 @@
 import discord
 import os
+import asyncio
 from discord.ext import commands
 from discord.ext.pages import Page, Paginator
 from utils.database import DictDB
@@ -28,7 +29,10 @@ class Blacklist(commands.Cog):
         self.bot.add_check(self.in_blacklist)
         self.channel = self.bot.get_channel(self.channelID)
         if self.channel is None:
-            self.channel = self.bot.fetch_channel(self.channelID)
+            self.channel = bot.loop.create_task(self.get_channel())
+
+    async def get_channel(self):
+        return await self.bot.fetch_channel(self.channelID)
 
     def load_blacklist(self):
         db = DictDB(self.path)
@@ -109,24 +113,26 @@ class Blacklist(commands.Cog):
     @blacklist.command()
     @commands.is_owner()
     async def list(self, ctx: discord.ApplicationContext):
-        await ctx.respond("Building list... Please wait...")
         pages = []
         count = 0
         embed = discord.Embed(title="Blacklist")
-        for user_id, reason in self.users.items():
-            user = self.bot.get_user(user_id)
-            if user is None:
-                username = "Can't find user."
-            else:
-                username = f"{user.name}{f'#{user.discriminator}' if user.discriminator != '0' else ''}"
-            embed.add_field(
-                name=f"{user_id} ({username})", value=f"Reason: {reason}", inline=True
-            )
-            count += 1
-            if count >= 25:
-                pages.append(Page(embeds=[embed]))
-                embed = discord.Embed(title="Blacklist")
-                count = 0
+        async with ctx.channel.typing():
+            for user_id, reason in self.users.items():
+                user = self.bot.get_user(user_id)
+                if user is None:
+                    username = "Can't find user."
+                else:
+                    username = f"{user.name}{f'#{user.discriminator}' if user.discriminator != '0' else ''}"
+                embed.add_field(
+                    name=f"{user_id} ({username})",
+                    value=f"Reason: {reason}",
+                    inline=True,
+                )
+                count += 1
+                if count >= 25:
+                    pages.append(Page(embeds=[embed]))
+                    embed = discord.Embed(title="Blacklist")
+                    count = 0
 
         pages.append(Page(embeds=[embed]))
         page = Paginator(pages=pages)
