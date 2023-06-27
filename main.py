@@ -1,6 +1,7 @@
 import discord, time, sys, os, traceback, json
 from discord.ext import commands, tasks
 from utils.config import Config
+from utils.logger import Logger
 from utils.settings import Settings
 from utils.status import *
 from utils.helpers import *
@@ -121,6 +122,7 @@ async def on_ready():
     start_time = time.time()
     bot.config = Config(bot)
     bot.settings = Settings(bot)
+    bot.logger = Logger(bot)
     send_status.start()
     change_presence.start()
     print(f"Startup took: {time.time() - start_time:.03f}s")

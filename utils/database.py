@@ -17,17 +17,17 @@ class DictDB(sqlite3.Connection):
         super().__init__(self.path)
         self.row_factory = dict_factory
 
-    def insert(self, query: str, params: List[Any]):
+    def insert(self, query: str, params: List[Any] = []):
         self.cur = self.cursor()
         self.cur.execute(query, params)
         self.commit()
 
-    def fetchall(self, query: str, params: List[Any]):
+    def fetchall(self, query: str, params: List[Any] = []):
         self.cur = self.cursor()
         self.cur.execute(query, params)
         return self.cur.fetchall()
 
-    def delete(self, query: str, params: List[Any]):
+    def delete(self, query: str, params: List[Any] = []):
         self.cur = self.cursor()
         self.cur.execute(query, params)
         self.commit()

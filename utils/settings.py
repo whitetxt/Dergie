@@ -5,120 +5,102 @@ import time
 import sqlite3
 from typing import Dict
 
+from utils.database import DictDB
+
+
 class ServerSettings:
-	database: str
+    database: str
 
-	server_id: int
-	server_name: str
-	num_members: int
+    server_id: int
 
-	automod_enabled: bool
-	antifish_strength: float
+    automod_enabled: bool
+    log_id: float | None
 
-	def __init__(self, database: str, server_id: int):
-		self.database = database
-		self.server_id = server_id
+    def __init__(self, database: str, server_id: int):
+        self.database = database
+        self.server_id = server_id
 
-		self.server_name = ""
-		self.num_members = 0
+        self.automod_enabled = True
+        self.log_id = None
 
-		self.automod_enabled = True
-		self.antifish_strength = 0.85
+    def load_from_database(self):
+        db = DictDB(self.database)
 
-	def load_from_database(self):
-		db = sqlite3.connect(self.database)
-		cursor = db.cursor()
-		result = cursor.execute("SELECT name, num_members FROM servers WHERE server_id = ?", (self.server_id, )).fetchone()
-		self.server_name = result[0]
-		self.num_members = result[1]
+        result = db.fetchall(
+            "SELECT automod, log_id FROM settings WHERE server_id = ?",
+            (self.server_id,),
+        )[0]
+        self.automod_enabled = result["automod"] is not None
+        self.log_id = result["log_id"]
+        db.close()
 
-		result = cursor.execute("SELECT automod, antifish_strength FROM settings WHERE server_id = ?", (self.server_id, )).fetchone()
-		self.automod_enabled = result[0] is not None
-		self.antifish_strength = result[1]
-		cursor.close()
-		db.close()
+    def save(self) -> None:
+        db = sqlite3.connect(self.database)
+        cursor = db.cursor()
+        if (
+            cursor.execute(
+                "SELECT * FROM settings WHERE server_id = ?", (self.server_id,)
+            ).fetchone()
+            is None
+        ):
+            cursor.execute(
+                "INSERT INTO settings(server_id, automod) VALUES (?,?)",
+                (self.server_id, "yes" if self.automod_enabled else None),
+            )
+        else:
+            cursor.execute(
+                "UPDATE settings SET automod = ? WHERE server_id = ?",
+                ("yes" if self.automod_enabled else None, self.server_id),
+            )
+        db.commit()
+        cursor.close()
+        db.close()
 
-	def save(self) -> None:
-		db = sqlite3.connect(self.database)
-		cursor = db.cursor()
-		if cursor.execute("SELECT * FROM servers WHERE server_id = ?", (self.server_id, )).fetchone() is None:
-			cursor.execute("INSERT INTO servers(server_id, name, num_members) VALUES (?,?,?)", (self.server_id, self.server_name, self.num_members))
-		else:
-			cursor.execute("UPDATE servers SET name = ?, num_members = ? WHERE server_id = ?", (self.server_name, self.num_members, self.server_id))
-
-		if cursor.execute("SELECT * FROM settings WHERE server_id = ?", (self.server_id, )).fetchone() is None:
-			cursor.execute("INSERT INTO settings(server_id, automod) VALUES (?,?)", (self.server_id, "yes" if self.automod_enabled else None))
-		else:
-			cursor.execute("UPDATE settings SET automod = ? WHERE server_id = ?", ("yes" if self.automod_enabled else None, self.server_id))
-		db.commit()
-		cursor.close()
-		db.close()
 
 class Settings:
-	bot: discord.Bot
+    bot: discord.Bot
 
-	database_path: str = ""
+    database_path: str = ""
 
-	server_settings: Dict[int, ServerSettings] = {}
+    server_settings: Dict[int, ServerSettings] = {}
 
-	def __init__(self, bot: discord.Bot):
-		self.bot = bot
-		self.database_path = os.path.join("databases", "settings.db")
-		# Perform initial database structure check.
-		db = sqlite3.connect(self.database_path)
-		table_names = [t[0] for t in db.execute("SELECT name FROM sqlite_master WHERE type='table';")]
-		expected_tables = {	"servers":
-"""CREATE TABLE "servers" (
-	"server_id"	INTEGER NOT NULL,
-	"name"	TEXT,
-	"num_members"	INTEGER DEFAULT 0,
-	"join_time"	INTEGER DEFAULT 0,
-	PRIMARY KEY("server_id")
-);""",
-							"settings": 
-"""CREATE TABLE "settings" (
-	"server_id"	INTEGER NOT NULL,
-	"automod"	TEXT DEFAULT 'yes',
-	"antifish_strength"	REAL NOT NULL DEFAULT 0.85,
-	PRIMARY KEY("server_id"),
-	FOREIGN KEY("server_id") REFERENCES "servers"("server_id")
-);"""}
+    def __init__(self, bot: discord.Bot):
+        self.bot = bot
+        self.database_path = os.path.join("databases", "settings.db")
+        # Perform initial database structure check.
+        db = DictDB(self.database_path)
 
-		cursor = db.cursor()
-		for table, ddl in expected_tables.items():
-			if table not in table_names:
-				cursor.execute(ddl)
-				db.commit()
-		
-		# Load settings for each server
-		for server in cursor.execute("SELECT server_id FROM servers").fetchall():
-			server = server[0]
-			self.server_settings[server] = ServerSettings(self.database_path, server)
-			self.server_settings[server].load_from_database()
+        # Load settings for each server
+        for server in db.fetchall("SELECT server_id FROM servers"):
+            server = server["server_id"]
+            self.server_settings[server] = ServerSettings(self.database_path, server)
+            self.server_settings[server].load_from_database()
 
-		for guild in bot.guilds:
-			g = guild
-			guild_id = g.id
-			name = g.name
-			member_count = g.member_count
-			if guild_id in self.server_settings:
-				self.server_settings[guild_id].server_name = name
-				self.server_settings[guild_id].num_members = member_count
-			else:
-				print(f"Creating new settings for `{name}`...")
-				self.create_settings(guild_id, name, member_count)
-			self.server_settings[guild_id].save()
+        for g in bot.guilds:
+            guild_id = g.id
+            if guild_id not in self.server_settings:
+                print(f"Creating new settings for `{g.name}`...")
+                self.create_settings(guild_id)
 
-		cursor.close()
-		db.close()
+        db.close()
 
-	def create_settings(self, guild_id: int, name: str, num_members: int) -> None:
-		if guild_id in self.server_settings: return
-		self.server_settings[guild_id] = ServerSettings(self.database_path, guild_id)
-		self.server_settings[guild_id].server_name = name
-		self.server_settings[guild_id].num_members = num_members
-		self.server_settings[guild_id].save()
+    @classmethod
+    def create_settings(cls, guild_id: int) -> None:
+        if guild_id in cls.server_settings:
+            return
+        cls.server_settings[guild_id] = ServerSettings(cls.database_path, guild_id)
+        cls.server_settings[guild_id].save()
 
-	@classmethod
-	def get_settings(cls, guild_id: int) -> ServerSettings | None:
-		return cls.server_settings.get(guild_id)
+    @classmethod
+    def get_settings(cls, guild_id: int) -> ServerSettings | None:
+        """Gets the server settings for the specified guild ID
+
+        Args:
+            guild_id (int): The ID for the guild
+
+        Returns:
+            ServerSettings | None
+        """
+        if cls.server_settings.get(guild_id) is None:
+            cls.create_settings(guild_id)
+        return cls.server_settings[guild_id]

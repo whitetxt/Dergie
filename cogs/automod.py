@@ -1,69 +1,103 @@
+import tarfile
 import discord
 import requests
 import re
 from typing import List
-from discord.ext import commands
+from discord.ext import commands, tasks
 from utils.settings import *
 from utils.helpers import *
 
+
 class AutoMod(commands.Cog):
-	bot: discord.Bot
+    bot: discord.Bot
 
-	bad_url_overrides: List[str] = []
+    bad_url_overrides: List[str] = []
+    bad_urls: List[str] = []
 
-	def __init__(self, bot: discord.Bot):
-		self.bot = bot
+    def __init__(self, bot: discord.Bot):
+        self.bot = bot
+        if os.path.exists("databases/cached-urls.txt"):
+            with open("databases/cached-urls.txt", "r") as f:
+                self.bad_urls = [line.strip() for line in f.readlines()]
 
-	@commands.Cog.listener()
-	@commands.guild_only()
-	async def on_message(self, message: discord.Message):
-		if message.author == self.bot.user: return
-		if not message.guild: return
-		guild = message.guild
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.update_bad_urls.start()
 
-		settings = Settings.get_settings(guild.id)
-		if settings is None: return
+    @tasks.loop(hours=1)
+    async def update_bad_urls(self):
+        print("Downloading URL .tar.gz")
+        url = "https://raw.githubusercontent.com/mitchellkrogza/Phishing.Database/master/ALL-phishing-domains.tar.gz"
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open("urls.tar.gz", "wb") as f:
+                f.write(response.raw.read())
 
-		if settings.automod_enabled:
-			await self.check_automod_trigger(message)
+        print("Downloaded URL .tar.gz")
 
-	async def check_automod_trigger(self, message: discord.Message):
-		# Check for any dangerous URLs
-		urls = self.check_bad_urls(message)
-		if urls is not None:
-			await message.delete()
-			urls = [url for url in urls if url not in self.bad_url_overrides]
-			if len(", ".join(x["domain"] for x in urls)) > 1000:
-				urlsToSend = urls[0]["domain"]
-				urls = urls[1:]
-				while len(urlsToSend) < 1000 and len(urls) > 0:
-					urlsToSend += ", " + urls[0]["domain"]
-				urlsToSend = ", ".join(urlsToSend.split(", ")[:-1]) + " & more"
-			else:
-				urlsToSend = ", ".join(x["domain"] for x in urls)
-			await message.author.send(f"""{Emojis.failure} Dergie Warning! {Emojis.failure}
+        with tarfile.open("urls.tar.gz", "r:gz") as tar:
+            for member in tar.getmembers():
+                if "phishing" in member.name:
+                    f = tar.extractfile(member)
+                    if f is not None:
+                        self.bad_urls = [str(line.strip()) for line in f.readlines()]
+                        with open("databases/cached-urls.txt", "w") as f:
+                            f.writelines(self.bad_urls)
+
+        os.remove("urls.tar.gz")
+
+        print(f"Loaded & cached phishing {len(self.bad_urls)} URLs")
+
+    @commands.Cog.listener()
+    @commands.guild_only()
+    async def on_message(self, message: discord.Message):
+        if message.author == self.bot.user:
+            return
+        if not message.guild:
+            return
+        guild = message.guild
+
+        settings = Settings.get_settings(guild.id)
+        if settings is None:
+            return
+
+        if settings.automod_enabled:
+            await self.check_automod_trigger(message)
+
+    async def check_automod_trigger(self, message: discord.Message):
+        # Check for any dangerous URLs
+        urls = self.check_bad_urls(message)
+        if urls is not None:
+            await message.delete()
+            urls = [url for url in urls if url not in self.bad_url_overrides]
+            if len(", ".join(x["domain"] for x in urls)) > 1000:
+                urlsToSend = urls[0]["domain"]
+                urls = urls[1:]
+                while len(urlsToSend) < 1000 and len(urls) > 0:
+                    urlsToSend += ", " + urls[0]["domain"]
+                urlsToSend = ", ".join(urlsToSend.split(", ")[:-1]) + " & more"
+            else:
+                urlsToSend = ", ".join(x["domain"] for x in urls)
+            await message.author.send(
+                f"""{Emojis.failure} Dergie Warning! {Emojis.failure}
 Your recent message in `{message.guild.name}` has been deleted as it was determined to have dangerous URLs in it.
 Please review what you are sending and try again!
 Detected dangerous URLs: {urlsToSend}
 
-If you think this is a false positive, please open a ticket in the support server: {Details.support_url}""")
-		return
+If you think this is a false positive, please open a ticket in the support server: {Details.support_url}"""
+            )
+        return
 
-	def check_bad_urls(self, message: discord.Message):
-		urls = re.findall("(?:[A-z0-9](?:[A-z0-9-]{0,61}[A-z0-9])?\\.)+[A-z0-9][A-z0-9-]{0,61}[A-z0-9]", message.content)
-		if len(urls) == 0: return None
-		req = requests.post("https://anti-fish.bitflow.dev/check", json={"message": message.content})
-		if req.status_code != 200:
-			if req.status_code != 404:
-				print(f"Unknown return from anti-fish:\n{req.status_code} - {req.content}")
-			return None
-		
-		js = req.json()
-		if not js["match"]:
-			return None
-		js["matches"] = [url for url in js["matches"] if url not in self.bad_url_overrides]
-		return js["matches"]
+    @commands.Cog.listener()
+    @commands.guild_only()
+    async def on_message_edit(self, before, after):
+        self.on_message(after)
+
+    def check_bad_urls(self, message: discord.Message):
+        # TODO:
+        # Rewrite this.
+        return None
 
 
 def setup(bot):
-	bot.add_cog(AutoMod(bot))
+    bot.add_cog(AutoMod(bot))

@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 
-class Owner(commands.Cog):
+class Template(commands.Cog):
     def __init__(self, bot: discord.Bot):
         self.bot = bot
 
@@ -17,4 +17,4 @@ class Owner(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Owner(bot))
+    bot.add_cog(Template(bot))
