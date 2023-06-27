@@ -1,6 +1,6 @@
 import traceback
 import discord
-import utils.logger
+from utils.logger import Logger
 from discord.ext import commands
 from utils.helpers import Emojis, Details
 from cogs.blacklist import Blacklisted
@@ -22,7 +22,7 @@ class Listeners(commands.Cog):
             )
         elif isinstance(error, Blacklisted):
             await ctx.respond(
-                f"{Emojis.failure} You have been blacklisted from using Dergie for the following reason:\n{error}"
+                f"{Emojis.failure} You have been blacklisted from using me for the following reason:\n{error}"
             )
         elif isinstance(error, discord.errors.CheckFailure):
             await ctx.respond(
@@ -49,11 +49,11 @@ class Listeners(commands.Cog):
                 banAudit = entry
                 break
         if banAudit is None:
-            await logger.ban(
+            await Logger.ban(
                 "Discord Ban", guild, user, reason="Unable to grab reason."
             )
             return
-        await logger.ban(
+        await Logger.ban(
             banAudit.user,
             guild,
             user,
@@ -70,11 +70,11 @@ class Listeners(commands.Cog):
                 unbanAudit = entry
                 break
         if unbanAudit is None:
-            await logger.unban(
+            await Logger.unban(
                 "Discord Unban", guild, user, reason="Unable to grab reason."
             )
             return
-        await logger.unban(
+        await Logger.unban(
             unbanAudit.user,
             guild,
             user,
@@ -91,11 +91,11 @@ class Listeners(commands.Cog):
                 kickAudit = entry
                 break
         if kickAudit is None:
-            await logger.kick(
+            await Logger.kick(
                 "Discord Kick", member.guild, member, reason="Unable to grab reason."
             )
             return
-        await logger.kick(
+        await Logger.kick(
             kickAudit.user,
             member.guild,
             member,

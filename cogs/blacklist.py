@@ -4,7 +4,7 @@ import asyncio
 from discord.ext import commands
 from discord.ext.pages import Page, Paginator
 from utils.database import DictDB
-from utils.helpers import Emojis, Details
+from utils.helpers import Emojis, Details, format_username
 from typing import Dict
 
 
@@ -28,11 +28,14 @@ class Blacklist(commands.Cog):
         self.load_blacklist()
         self.bot.add_check(self.in_blacklist)
         self.channel = self.bot.get_channel(self.channelID)
-        if self.channel is None:
-            self.channel = bot.loop.create_task(self.get_channel())
 
     async def get_channel(self):
         return await self.bot.fetch_channel(self.channelID)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        if self.channel is None:
+            await self.get_channel()
 
     def load_blacklist(self):
         db = DictDB(self.path)
@@ -74,7 +77,7 @@ class Blacklist(commands.Cog):
         )
         embed.add_field(
             name="Username",
-            value=f"({user_id})\n{user.name}{f'#{user.discriminator}' if user.discriminator != '0' else ''}",
+            value=f"({user_id})\n{format_username(user)}",
             inline=True,
         )
         embed.add_field(name="Reason", value=reason, inline=True)
@@ -103,7 +106,7 @@ class Blacklist(commands.Cog):
         )
         embed.add_field(
             name="Username",
-            value=f"({user_id})\n{user.name}{f'#{user.discriminator}' if user.discriminator != '0' else ''}",
+            value=f"({user_id})\n{format_username(user)}",
             inline=True,
         )
         embed.add_field(name="Reason", value=reason, inline=True)
@@ -122,7 +125,7 @@ class Blacklist(commands.Cog):
                 if user is None:
                     username = "Can't find user."
                 else:
-                    username = f"{user.name}{f'#{user.discriminator}' if user.discriminator != '0' else ''}"
+                    username = format_username(user)
                 embed.add_field(
                     name=f"{user_id} ({username})",
                     value=f"Reason: {reason}",

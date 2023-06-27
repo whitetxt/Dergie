@@ -51,7 +51,7 @@ async def change_presence():
     )
 
 
-@tasks.loop(seconds=5)
+@tasks.loop(seconds=15)
 async def send_status():
     Status.servers = len(bot.guilds)
     Status.members = len(bot.users)
@@ -122,11 +122,11 @@ async def on_ready():
     start_time = time.time()
     bot.config = Config(bot)
     bot.settings = Settings(bot)
-    bot.logger = Logger(bot)
+    Logger.bot = bot
     send_status.start()
     change_presence.start()
     print(f"Startup took: {time.time() - start_time:.03f}s")
-    print(f"Logged in as: {bot.user.name}#{bot.user.discriminator}")
+    print(f"Logged in as: {format_username(bot.user)}")
     start_time = time.time()
 
 

@@ -1,6 +1,10 @@
+from os import error
 import discord
 from discord.ext import commands
 from discord.commands import Option
+
+from utils.helpers import Emojis, format_username
+from utils.logger import Logger
 
 
 class Moderation(commands.Cog):
@@ -20,20 +24,16 @@ class Moderation(commands.Cog):
         try:
             await ctx.guild.kick(
                 user,
-                reason=f"Kicked by {ctx.author.display_name}#{ctx.author.discriminator}. Reason: {reason}",
+                reason=f"Kicked by {format_username(ctx.author)}. Reason: {reason}",
             )
-            await ctx.respond(
-                f"Successfully kicked {user.display_name}#{user.discriminator}!"
-            )
+            await ctx.respond(f"Successfully kicked {format_username(user)}!")
         except (discord.errors.Forbidden, discord.errors.HTTPException) as e:
             error_msg = "Unknown error."
             if isinstance(e, discord.errors.Forbidden):
                 error_msg = "I do not have permission!"
             elif isinstance(e, discord.errors.HTTPException):
                 error_msg = "Unknown. Please try again later."
-            await ctx.respond(
-                f"Couldn't kick {user.display_name}#{user.discriminator}: {error_msg}"
-            )
+            await ctx.respond(f"Couldn't kick {format_username(user)}: {error_msg}")
 
     @commands.slash_command(description="Bans a member.")
     async def ban(
@@ -46,12 +46,14 @@ class Moderation(commands.Cog):
     ):
         user: discord.Member = user
         try:
+            msg = await ctx.respond(f"Attempting to ban {format_username(user)}...")
             await ctx.guild.ban(
                 user,
-                reason=f"Banned by {ctx.author.display_name}#{ctx.author.discriminator}. Reason: {reason}",
+                reason=f"Banned by {format_username(ctx.author)}. Reason: {reason}",
             )
-            await ctx.respond(
-                f"Successfully banned {user.display_name}#{user.discriminator}!"
+            await Logger.ban(ctx.author, ctx.guild_id, user, reason)
+            await msg.edit_original_response(
+                content=f"Successfully banned {format_username(user)}!"
             )
         except (discord.errors.Forbidden, discord.errors.HTTPException) as e:
             error_msg = "Unknown error."
@@ -59,8 +61,40 @@ class Moderation(commands.Cog):
                 error_msg = "I do not have permission!"
             elif isinstance(e, discord.errors.HTTPException):
                 error_msg = "Unknown error. Please try again later."
-            await ctx.respond(
-                f"Couldn't ban {user.display_name}#{user.discriminator}: {error_msg}"
+            await msg.edit_original_response(
+                content=f"Couldn't ban {format_username(user)}: {error_msg}"
+            )
+
+    @commands.slash_command(
+        description="Unbans a user. Use their user ID to unban them."
+    )
+    async def unban(
+        self,
+        ctx: discord.ApplicationContext,
+        user: Option(discord.User, description="User to unban"),
+        reason: Option(
+            str, description="Reason for unban", default="No reason provided."
+        ),
+    ):
+        user: discord.User = user
+        try:
+            msg = await ctx.respond(f"Attempting to unban {format_username(user)}...")
+            await ctx.guild.unban(
+                user,
+                reason=f"Unbanned by {format_username(ctx.author)}. Reason: {reason}",
+            )
+            await Logger.unban(ctx.author, ctx.guild_id, user, reason)
+            await msg.edit_original_response(
+                content=f"{Emojis.success} Successfully unbanned {format_username(user)}!"
+            )
+        except (discord.errors.Forbidden, discord.errors.HTTPException) as e:
+            error_msg = f"Unknown error: {e}"
+            if isinstance(e, discord.errors.Forbidden):
+                error_msg = "I do not have permission!"
+            elif "Unknown Ban" in e:
+                error_msg = "This user is not banned!"
+            await msg.edit_original_response(
+                content=f"{Emojis.failure} Couldn't unban {format_username(user)}: {error_msg}"
             )
 
     @commands.slash_command(
@@ -88,13 +122,9 @@ class Moderation(commands.Cog):
             channel: discord.TextChannel = ctx.channel
         else:
             channel: discord.TextChannel = channel
-        sent_msg = await ctx.respond(
-            f"Purging {amount} messages, this may take a while..."
-        )
+        await ctx.respond(f"Purging {amount} messages, this may take a while...")
 
         def check(m: discord.Message):
-            if m.id == sent_msg.id:
-                return False
             if delete_bot:
                 return m.author == self.bot.user
             else:
@@ -102,12 +132,13 @@ class Moderation(commands.Cog):
 
         messages = await channel.purge(
             limit=amount,
-            reason=f"Purged by {ctx.author.display_name}#{ctx.author.discriminator}. Reason: {reason}",
+            reason=f"Purged by {format_username(ctx.author)}. Reason: {reason}",
             bulk=True,
             check=check,
         )
-        await sent_msg.edit(
-            content=f"Successfully purged {len(messages)}/{amount} messages!"
+        await Logger.purge(ctx.author, ctx.guild_id, channel, reason, len(messages))
+        await ctx.channel.send(
+            f"Successfully purged {len(messages)}/{amount} messages!"
         )
 
 

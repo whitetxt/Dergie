@@ -35,6 +35,7 @@ class ServerSettings:
         db.close()
 
     def save(self) -> None:
+        print(self.database)
         db = sqlite3.connect(self.database)
         cursor = db.cursor()
         if (
@@ -44,13 +45,13 @@ class ServerSettings:
             is None
         ):
             cursor.execute(
-                "INSERT INTO settings(server_id, automod) VALUES (?,?)",
-                (self.server_id, "yes" if self.automod_enabled else None),
+                "INSERT INTO settings(server_id, automod, log_id) VALUES (?,?,?)",
+                (self.server_id, "yes" if self.automod_enabled else None, self.log_id),
             )
         else:
             cursor.execute(
-                "UPDATE settings SET automod = ? WHERE server_id = ?",
-                ("yes" if self.automod_enabled else None, self.server_id),
+                "UPDATE settings SET automod = ?, log_id = ? WHERE server_id = ?",
+                ("yes" if self.automod_enabled else None, self.log_id, self.server_id),
             )
         db.commit()
         cursor.close()

@@ -41,15 +41,15 @@ class Help(commands.Cog):
                 title="Help Menu",
                 colour=discord.Colour(0xFFC8DD),
                 timestamp=datetime.datetime.utcnow(),
-                description="""Welcome to Dergie's help menu!
+                description="""Welcome to my help menu!
 
-Dergie is a multi-purpose bot, with many features such as:
+I am a multi-purpose bot, with many features such as:
 - Advanced Auto-Moderation
 - Reaction Roles & Auto-Role
 - Fun Games
 - Fully Fledged Economy
 
-This help menu is meant to assist Users and Admins with getting their heads around the many features that Dergie offers.
+This help menu is meant to assist Users and Admins with getting their heads around the many features that I offer.
 
 Use the buttons below to navigate!""",
             )
@@ -96,13 +96,13 @@ Use the buttons below to navigate!""",
 
         await paginator.respond(ctx.interaction, ephemeral=False)
 
-    @commands.slash_command(description="Displays Dergie's current version.")
+    @commands.slash_command(description="Displays my current version.")
     async def version(self, ctx: discord.ApplicationContext):
         await ctx.respond(
             f"I am running v{self.bot.config.version}\nUse the changelog command to see what has changed!"
         )
 
-    @commands.slash_command(description="Displays Dergie's changelog")
+    @commands.slash_command(description="Displays my changelog")
     async def changelog(
         self,
         ctx: discord.ApplicationContext,

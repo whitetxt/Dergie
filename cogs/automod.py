@@ -1,4 +1,5 @@
 import tarfile
+import threading
 import discord
 import requests
 import re
@@ -26,12 +27,16 @@ class AutoMod(commands.Cog):
 
     @tasks.loop(hours=1)
     async def update_bad_urls(self):
+        thread = threading.Thread(target=self.update_bad_urls_thread)
+        thread.start()
+
+    def update_bad_urls_thread(self):
         print("Downloading URL .tar.gz")
         url = "https://raw.githubusercontent.com/mitchellkrogza/Phishing.Database/master/ALL-phishing-domains.tar.gz"
-        response = requests.get(url, stream=True)
+        response = requests.get(url)
         if response.status_code == 200:
             with open("urls.tar.gz", "wb") as f:
-                f.write(response.raw.read())
+                f.write(response.content)
 
         print("Downloaded URL .tar.gz")
 
@@ -40,9 +45,11 @@ class AutoMod(commands.Cog):
                 if "phishing" in member.name:
                     f = tar.extractfile(member)
                     if f is not None:
-                        self.bad_urls = [str(line.strip()) for line in f.readlines()]
+                        self.bad_urls = [
+                            line.strip().decode() for line in f.readlines()
+                        ]
                         with open("databases/cached-urls.txt", "w") as f:
-                            f.writelines(self.bad_urls)
+                            f.writelines([url + "\n" for url in self.bad_urls])
 
         os.remove("urls.tar.gz")
 
@@ -70,16 +77,17 @@ class AutoMod(commands.Cog):
         if urls is not None:
             await message.delete()
             urls = [url for url in urls if url not in self.bad_url_overrides]
-            if len(", ".join(x["domain"] for x in urls)) > 1000:
-                urlsToSend = urls[0]["domain"]
+            if len(", ".join(urls)) > 1000:
+                urlsToSend = urls[0]
                 urls = urls[1:]
                 while len(urlsToSend) < 1000 and len(urls) > 0:
-                    urlsToSend += ", " + urls[0]["domain"]
+                    urlsToSend += ", " + urls[0]
+                    urls = urls[1:]
                 urlsToSend = ", ".join(urlsToSend.split(", ")[:-1]) + " & more"
             else:
-                urlsToSend = ", ".join(x["domain"] for x in urls)
+                urlsToSend = ", ".join(urls)
             await message.author.send(
-                f"""{Emojis.failure} Dergie Warning! {Emojis.failure}
+                f"""{Emojis.failure} Warning! {Emojis.failure}
 Your recent message in `{message.guild.name}` has been deleted as it was determined to have dangerous URLs in it.
 Please review what you are sending and try again!
 Detected dangerous URLs: {urlsToSend}
@@ -91,12 +99,22 @@ If you think this is a false positive, please open a ticket in the support serve
     @commands.Cog.listener()
     @commands.guild_only()
     async def on_message_edit(self, before, after):
-        self.on_message(after)
+        await self.on_message(after)
 
     def check_bad_urls(self, message: discord.Message):
         # TODO:
         # Rewrite this.
-        return None
+        urls = re.findall(
+            "(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)",
+            message.content,
+        )
+        if len(urls) == 0:
+            return None
+        bad_urls = []
+        for url in urls:
+            if url in self.bad_urls:
+                bad_urls.append(url)
+        return bad_urls
 
 
 def setup(bot):

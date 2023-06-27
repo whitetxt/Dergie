@@ -14,7 +14,7 @@ async def send_status_message(message: discord.Message):
         print("Status message is None.")
         return
     emb = discord.Embed(
-        title="My Status :3",
+        title="My Status :3c",
         description=f"Last Generated at {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')} UTC",
         color=discord.Color(0xF5ABB9),
     )

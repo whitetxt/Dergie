@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from utils.checks import *
-from utils.helpers import Emojis
+from utils.helpers import Emojis, format_username
 
 
 def privatevc_issetup():
@@ -40,7 +40,7 @@ class PrivateVC(commands.Cog):
             if category is None or category.name != "Private VCs":
                 continue
             for channel in channels:
-                if f"{ctx.author.name}#{ctx.author.discriminator}" not in channel.name:
+                if format_username(ctx.author) not in channel.name:
                     continue
                 await ctx.respond(
                     f"{Emojis.warning} You already have a Private VC! Here it is for you: {channel.mention}"
@@ -53,7 +53,7 @@ class PrivateVC(commands.Cog):
         ][0]
         await msg.edit_original_response(content="[33%] Creating voice channel...")
         vc: discord.VoiceChannel = await ctx.guild.create_voice_channel(
-            f"{ctx.author.name}#{ctx.author.discriminator} (1 users allowed)",
+            f"{format_username(ctx.author)} (1 users allowed)",
             reason="Dergie Private Voice Channels",
             category=category,
         )
@@ -89,7 +89,7 @@ class PrivateVC(commands.Cog):
             if category is None or category.name != "Private VCs":
                 continue
             for channel in channels:
-                if f"{ctx.author.name}#{ctx.author.discriminator}" not in channel.name:
+                if format_username(ctx.author) not in channel.name:
                     continue
                 vc = channel
                 break
@@ -103,7 +103,7 @@ class PrivateVC(commands.Cog):
         current_perms = vc.permissions_for(user)
         if current_perms.view_channel is True or current_perms.connect is True:
             await msg.edit_original_response(
-                content=f"{Emojis.failure} {user.name}#{user.discriminator} already has permission to join your Private VC!"
+                content=f"{Emojis.failure} {format_username(user)} already has permission to join your Private VC!"
             )
             return
         await msg.edit_original_response(content="[50%] Editing permissions...")
@@ -114,15 +114,15 @@ class PrivateVC(commands.Cog):
             user, overwrite=perms, reason="Private Voice Channel - User Add"
         )
         prev_users = int(
-            vc.name.replace(
-                f"{ctx.author.name}#{ctx.author.discriminator} (", ""
-            ).replace(" users allowed)", "")
+            vc.name.replace(f"{format_username(ctx.author)} (", "").replace(
+                " users allowed)", ""
+            )
         )
         await vc.edit(
-            name=f"{ctx.author.name}#{ctx.author.discriminator} ({prev_users + 1} users allowed)"
+            name=f"{format_username(ctx.author)} ({prev_users + 1} users allowed)"
         )
         await msg.edit_original_response(
-            content=f"{Emojis.success} {user.name}#{user.discriminator} has been given permissions to join your Private VC!"
+            content=f"{Emojis.success} {format_username(user)} has been given permissions to join your Private VC!"
         )
 
     @privatevc.command(
@@ -136,7 +136,7 @@ class PrivateVC(commands.Cog):
             if category is None or category.name != "Private VCs":
                 continue
             for channel in channels:
-                if f"{ctx.author.name}#{ctx.author.discriminator}" not in channel.name:
+                if format_username(ctx.author) not in channel.name:
                     continue
                 vc = channel
                 break
@@ -150,7 +150,7 @@ class PrivateVC(commands.Cog):
         current_perms = vc.permissions_for(user)
         if current_perms.view_channel is False or current_perms.connect is False:
             await msg.edit_original_response(
-                content=f"{Emojis.failure} {user.name}#{user.discriminator} does not have permission to join your Private VC!"
+                content=f"{Emojis.failure} {format_username(user)} does not have permission to join your Private VC!"
             )
             return
         await msg.edit_original_response(content="[50%] Removing permissions...")
@@ -161,15 +161,15 @@ class PrivateVC(commands.Cog):
             user, overwrite=perms, reason="Private Voice Channel - User Remove"
         )
         prev_users = int(
-            vc.name.replace(
-                f"{ctx.author.name}#{ctx.author.discriminator} (", ""
-            ).replace(" users allowed)", "")
+            vc.name.replace(f"{format_username(ctx.author)} (", "").replace(
+                " users allowed)", ""
+            )
         )
         await vc.edit(
-            name=f"{ctx.author.name}#{ctx.author.discriminator} ({prev_users - 1} users allowed)"
+            name=f"{format_username(ctx.author)} ({prev_users - 1} users allowed)"
         )
         await msg.edit_original_response(
-            content=f"{Emojis.success} {user.name}#{user.discriminator} has been removed from your Private VC!"
+            content=f"{Emojis.success} {format_username(user)} has been removed from your Private VC!"
         )
 
     @privatevc.command(description="Deletes your Private VC.")
@@ -181,7 +181,7 @@ class PrivateVC(commands.Cog):
             if category is None or category.name != "Private VCs":
                 continue
             for channel in channels:
-                if f"{ctx.author.name}#{ctx.author.discriminator}" not in channel.name:
+                if format_username(ctx.author) not in channel.name:
                     continue
                 vc = channel
                 break

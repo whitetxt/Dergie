@@ -21,7 +21,7 @@ class Owner(commands.Cog):
             if os.path.isfile(os.path.join("cogs", f))
         ]
         for Extension in cogs():
-            if Extension in self.IgnoreImport:
+            if Extension in self.ignore_import:
                 continue
             if ctx.value in Extension:
                 output.append(Extension)
@@ -58,6 +58,15 @@ class Owner(commands.Cog):
             ModuleNotFoundError,
         ) as e:
             await ctx.respond(f"Failed to reload `{cog_name}`\nError: {e}")
+        except discord.errors.ExtensionNotLoaded:
+            try:
+                self.bot.load_extension(f"cogs.{cog_name}")
+                await ctx.respond(f"Reloaded `{cog_name}`")
+            except (
+                discord.ClientException,
+                ModuleNotFoundError,
+            ) as e:
+                await ctx.respond(f"Failed to reload `{cog_name}`\nError: {e}")
 
     @owner.command()
     async def unload(
