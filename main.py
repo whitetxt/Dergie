@@ -270,7 +270,6 @@ async def on_application_command_error(
             f"{Emojis.failure} Uh oh! An unknown error has occurred! Please report this at {Details.bug_report_url}"
         )
 
-
 start_time = time.time()
 token = ""
 with open("token.ini") as f:
