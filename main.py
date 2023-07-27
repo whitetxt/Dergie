@@ -30,6 +30,8 @@ bot = discord.Bot(
     debug_guilds=[692513145880576020, 1054875370924548167],
 )
 
+bot.tasks = []
+
 
 @tasks.loop(minutes=1)
 async def change_presence():
@@ -123,8 +125,9 @@ async def on_ready():
     bot.config = Config(bot)
     bot.settings = Settings(bot)
     Logger.bot = bot
-    send_status.start()
-    change_presence.start()
+    bot.tasks += [send_status, change_presence]
+    for task in bot.tasks:
+        task.start()
     print(f"Startup took: {time.time() - start_time:.03f}s")
     print(f"Logged in as: {format_username(bot.user)}")
     start_time = time.time()
@@ -158,5 +161,3 @@ if len(lines) == 0:
 token = lines[0]
 
 bot.run(token)
-print(f"Return Code: {ret_code}")
-exit(ret_code)

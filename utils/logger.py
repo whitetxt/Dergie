@@ -56,7 +56,7 @@ class Logger:
     @classmethod
     async def ban(
         cls,
-        initiator: discord.User,
+        initiator: discord.User | str,
         guild_id: int,
         user: discord.User,
         reason: str = "",
@@ -90,7 +90,7 @@ class Logger:
     @classmethod
     async def unban(
         cls,
-        initiator: discord.User,
+        initiator: discord.User | str,
         guild_id: int,
         user: discord.User,
         reason: str = "",
@@ -121,7 +121,7 @@ class Logger:
     @classmethod
     async def purge(
         cls,
-        initiator: discord.User,
+        initiator: discord.User | str,
         guild_id: int,
         purge_channel: discord.TextChannel,
         reason: str = "",
@@ -149,6 +149,37 @@ class Logger:
         else:
             embed.set_footer(
                 text=f"Purged by {initiator}",
+                icon_url=cls.bot.user.display_avatar.url,
+            )
+        await channel.send(embed=embed)
+
+    @classmethod
+    async def kick(
+        cls,
+        initiator: discord.User | str,
+        guild_id: int,
+        user: discord.User,
+        reason: str = "",
+    ):
+        channel = await cls.get_channel(guild_id)
+        if channel is None:
+            return
+        embed = discord.Embed(
+            title=f"{Emojis.warning} A member has been kicked {Emojis.warning}",
+            colour=discord.Colour.orange(),
+        )
+        embed.add_field(name="User:", value=f"{user.mention} ({format_username(user)})")
+        embed.add_field(
+            name="Reason:", value=reason if reason != "" else "No reason provided"
+        )
+        if isinstance(initiator, (discord.User, discord.Member)):
+            embed.set_footer(
+                text=f"Kicked by {format_username(initiator)}",
+                icon_url=initiator.display_avatar.url,
+            )
+        else:
+            embed.set_footer(
+                text=f"Kicked by {initiator}",
                 icon_url=cls.bot.user.display_avatar.url,
             )
         await channel.send(embed=embed)

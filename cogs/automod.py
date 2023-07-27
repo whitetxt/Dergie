@@ -17,13 +17,10 @@ class AutoMod(commands.Cog):
 
     def __init__(self, bot: discord.Bot):
         self.bot = bot
+        bot.tasks.append(self.update_bad_urls)
         if os.path.exists("databases/cached-urls.txt"):
             with open("databases/cached-urls.txt", "r") as f:
                 self.bad_urls = [line.strip() for line in f.readlines()]
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.update_bad_urls.start()
 
     @tasks.loop(hours=1)
     async def update_bad_urls(self):

@@ -2,7 +2,7 @@ import traceback
 import discord
 from utils.logger import Logger
 from discord.ext import commands
-from utils.helpers import Emojis, Details
+from utils.helpers import Emojis, Details, format_username
 from cogs.blacklist import Blacklisted
 
 
@@ -40,6 +40,10 @@ class Listeners(commands.Cog):
             print(error)
             traceback.print_exception(error)
             traceback.print_exc()
+            with open("error.log", "a") as f:
+                f.write(
+                    f"{'='*15}\nAuthor: {format_username(ctx.author)}\nCommand: {ctx.command}\nMessage: {ctx.message}\nError Type: {type(error)}\nError: {error}"
+                )
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild, user):

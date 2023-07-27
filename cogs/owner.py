@@ -1,3 +1,7 @@
+from io import StringIO
+import sys
+import time
+import traceback
 import discord, os, json
 from discord.ext import commands
 from utils.helpers import Emojis
@@ -10,7 +14,10 @@ class Owner(commands.Cog):
         self.bot = bot
 
     owner = discord.commands.SlashCommandGroup(
-        "owner", "Owner only commands.", checks=[commands.is_owner().predicate]
+        "owner",
+        "Owner only commands.",
+        checks=[commands.is_owner().predicate],
+        guild_ids=[1054875370924548167],
     )
 
     def cog_names(self, ctx: discord.AutocompleteContext):
@@ -28,19 +35,47 @@ class Owner(commands.Cog):
         return output
 
     @owner.command()
+    async def shutdown(self, ctx):
+        global ret_code
+        await ctx.respond("Bye bye QwQ")
+        for task in self.bot.tasks:
+            task.cancel()
+        await self.bot.change_presence(status=discord.Status.offline)
+        await self.bot.close()
+        sys.exit(1)
+
+    @owner.command()
+    async def restart(self, ctx):
+        global ret_code
+        await ctx.respond("Alright, cya soon ;3")
+
+        for task in self.bot.tasks:
+            task.cancel()
+        await self.bot.change_presence(status=discord.Status.idle)
+        await self.bot.close()
+        sys.exit(1)
+
+    @owner.command()
     async def eval(self, ctx: discord.ApplicationContext, to_eval: discord.Option(str)):
         msg = await ctx.respond("Evaluating expression...")
         error = None
+        start = time.perf_counter_ns()
+        orig = sys.stdout
+        sys.stdout = StringIO("")
         try:
             result = eval(to_eval)
         except Exception as e:
             error = e
+        taken = time.perf_counter_ns() - start
+        taken /= 1000
         if error is not None:
             await msg.edit_original_response(
-                f"An error occurred during evaluation.\nType: {type(error)}\n{error}"
+                content=f"An error occurred during evaluation.\nType: {type(error)}\n{error}\nTrace: {traceback.format_exc()}\nTime taken: {taken:.01f}ms"
             )
         else:
-            await msg.edit_original_response(f"Evaluation result:\n```{result}```")
+            await msg.edit_original_response(
+                content=f"Evaluation result:\n```{result}```\nTime taken: {taken:.01f}ms"
+            )
 
     @owner.command()
     async def reload(
