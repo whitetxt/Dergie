@@ -77,8 +77,8 @@ async def shutdown(ctx):
     global ret_code
     await ctx.respond("Bye bye QwQ")
     ret_code = 0
-    send_status.cancel()
-    change_presence.cancel()
+    for task in bot.tasks:
+        task.cancel()
     await bot.change_presence(status=discord.Status.offline)
     await bot.close()
 
@@ -89,8 +89,8 @@ async def restart(ctx):
     global ret_code
     await ctx.respond("Alright, cya soon ;3")
     ret_code = 1
-    send_status.cancel()
-    change_presence.cancel()
+    for task in bot.tasks:
+        task.cancel()
     await bot.change_presence(status=discord.Status.idle)
     await bot.close()
 
@@ -122,8 +122,8 @@ async def on_ready():
     global start_time
     print(f"Connection took: {time.time() - start_time:.03f}s")
     start_time = time.time()
-    bot.config = Config(bot)
     bot.settings = Settings(bot)
+    Config.bot = bot
     Logger.bot = bot
     bot.tasks += [send_status, change_presence]
     for task in bot.tasks:
@@ -161,3 +161,5 @@ if len(lines) == 0:
 token = lines[0]
 
 bot.run(token)
+print(ret_code)
+sys.exit(ret_code)

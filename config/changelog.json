@@ -1,7 +1,12 @@
 {
     "0.1.0a": {
-        "update_type": "Patch",
+        "update_type": "Major",
         "title": "Development Stage",
         "description": "Initial development, currently working on Auto-Mod and Moderation features, with some work on the general back-end."
+    },
+    "0.2.0a": {
+        "update_type": "Major",
+        "title": "Development Stage",
+        "description": "Still in development, but with some general re-working of the backend code & implementation of basic non-moderation features."
     }
 }

@@ -15,17 +15,6 @@ class Config:
     _changelog: Dict[str, Dict[str, str]] = {}
     last_changelog_update: float = 0.0
 
-    def __init__(self, bot: discord.Bot):
-        self.bot = bot
-        with open(os.path.join("config", "version.txt")) as f:
-            self.__class__._version = f.readline().replace("\n", "")
-        self.last_version_update = time.time()
-
-        with open(os.path.join("config", "changelog.json")) as f:
-            self.__class__._changelog = json.load(f)
-        self.__class__._changelog = OrderedDict(sorted(self._changelog.items()))
-        self.last_changelog_update = time.time()
-
     @property
     def version(self) -> str:
         if time.time() - self.last_version_update > 5 * 60:
@@ -35,12 +24,12 @@ class Config:
 
         return self._version
 
-    @property
-    def changelog(self) -> Dict[str, Dict[str, str]]:
-        if time.time() - self.last_changelog_update > 5 * 60:
+    @classmethod
+    def changelog(cls) -> Dict[str, Dict[str, str]]:
+        if time.time() - cls.last_changelog_update > 5 * 60:
             with open(os.path.join("config", "changelog.json")) as f:
-                self.__class__._changelog = json.load(f)
-            self.__class__._changelog = OrderedDict(sorted(self._changelog.items()))
-            self.last_changelog_update = time.time()
+                cls._changelog = json.load(f)
+            cls._changelog = OrderedDict(sorted(cls._changelog.items()))
+            cls.last_changelog_update = time.time()
 
-        return self._changelog
+        return cls._changelog

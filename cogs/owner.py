@@ -35,27 +35,6 @@ class Owner(commands.Cog):
         return output
 
     @owner.command()
-    async def shutdown(self, ctx):
-        global ret_code
-        await ctx.respond("Bye bye QwQ")
-        for task in self.bot.tasks:
-            task.cancel()
-        await self.bot.change_presence(status=discord.Status.offline)
-        await self.bot.close()
-        sys.exit(1)
-
-    @owner.command()
-    async def restart(self, ctx):
-        global ret_code
-        await ctx.respond("Alright, cya soon ;3")
-
-        for task in self.bot.tasks:
-            task.cancel()
-        await self.bot.change_presence(status=discord.Status.idle)
-        await self.bot.close()
-        sys.exit(1)
-
-    @owner.command()
     async def eval(self, ctx: discord.ApplicationContext, to_eval: discord.Option(str)):
         msg = await ctx.respond("Evaluating expression...")
         error = None

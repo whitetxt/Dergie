@@ -3,6 +3,7 @@ import datetime
 from discord.ext import commands, pages
 from discord.commands import Option
 from typing import Dict
+from utils.config import Config
 
 
 def changelog_versions(self, ctx: discord.AutocompleteContext):
@@ -113,7 +114,7 @@ Use the buttons below to navigate!""",
             autocomplete=changelog_versions,
         ),
     ):
-        changelog: Dict[str, Dict[str, str]] = self.bot.config.changelog
+        changelog: Dict[str, Dict[str, str]] = Config.changelog()
         if version is not None:
             if version not in changelog:
                 await ctx.respond(
