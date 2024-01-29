@@ -95,6 +95,67 @@ async def restart(ctx):
     await bot.close()
 
 
+@bot.slash_command(hidden=True)
+@commands.is_owner()
+async def load(ctx, cog: str):
+    try:
+        LoadingMsg = await ctx.send(f"Loading extension `{cog}`")
+        bot.load_extension(f"cogs.{cog}")
+        await LoadingMsg.edit(content=f"Extension `{cog}` loaded.")
+        print(f"Extension {cog} loaded")
+    except (discord.ClientException, ModuleNotFoundError, commands.errors.ExtensionNotFound):
+        await LoadingMsg.edit(content=f"Failed to load extension `{cog}`.")
+
+@bot.slash_command(hidden=True)
+@commands.is_owner()
+async def unload(ctx, cog: str):
+    try:
+        UnloadingMsg = await ctx.send(f"Unloading extension `{cog}`")
+        bot.unload_extension(f"cogs.{cog}")
+        await UnloadingMsg.edit(content=f"Extension `{cog}` unloaded.")
+        print(f"Extension {cog} unloaded")
+    except (discord.ClientException, ModuleNotFoundError):
+        await UnloadingMsg.edit(content=f"Failed to unload extension `{cog}`.")
+    except commands.errors.ExtensionNotLoaded:
+        await UnloadingMsg.edit(content=f"Extension `{cog}` has not been loaded.")
+
+@bot.slash_command(hidden=True)
+@commands.is_owner()
+async def reload(ctx, cog: str):
+    if cog == "all":
+        ReloadingMsg = await ctx.send(f"Reloading all extensions")
+        for Extension in [f.replace('.py', '') for f in os.listdir("Cogs") if os.path.isfile(os.path.join("Cogs", f))]:
+            if Extension in ignore_import:
+                continue
+            try:
+                bot.unload_extension(f"cogs.{Extension}")
+                bot.load_extension(f"cogs.{Extension}")
+            except (discord.ClientException, ModuleNotFoundError):
+                await ReloadingMsg.edit(content=f"Failed to unload extension `{Extension}`.")
+            except commands.errors.ExtensionNotLoaded:
+                await ReloadingMsg.edit(content=f"Loading extension `{Extension}`")
+                bot.load_extension(f"cogs.{Extension}")
+                print(f"Extension {Extension} reloaded")
+            except commands.errors.ExtensionNotFound:
+                await ReloadingMsg.edit(content=f"Extension `{Extension}` does not exist.")
+        await ReloadingMsg.edit(content="All extensions reloaded.")
+    else:
+        try:
+            ReloadingMsg = await ctx.send(f"Reloading extension `{cog}`")
+            bot.unload_extension(f"cogs.{cog}")
+            bot.load_extension(f"cogs.{cog}")
+            await ReloadingMsg.edit(content=f"Extension `{cog}` reloaded.")
+            print(f"Extension {cog} reloaded")
+        except (discord.ClientException, ModuleNotFoundError):
+            await ReloadingMsg.edit(content=f"Failed to unload extension `{cog}`.")
+        except commands.errors.ExtensionNotLoaded:
+            await ReloadingMsg.edit(content=f"Loading extension `{cog}`")
+            bot.load_extension(f"cogs.{cog}")
+            await ReloadingMsg.edit(content=f"Extension `{cog}` reloaded.")
+            print(f"Extension {cog} reloaded")
+        except commands.errors.ExtensionNotFound:
+            await ctx.send(f"Extension `{cog}` does not exist.")
+
 ignore_import = ["reactions", "template"]
 
 start_time = time.time()

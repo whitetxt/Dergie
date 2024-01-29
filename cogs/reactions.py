@@ -1,6 +1,5 @@
 import discord
 import sqlite3
-from typing import Dict
 from discord.ext import commands
 from utils.settings import *
 from utils.helpers import *
