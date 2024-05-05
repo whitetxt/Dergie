@@ -53,8 +53,9 @@ class Logger:
             return None
         channel = cls.bot.get_channel(channel_id)
         if channel is None:
-            channel = await cls.bot.fetch_channel(channel_id)
-            if channel is None:
+            try:
+                channel = await cls.bot.fetch_channel(channel_id)
+            except discord.errors.NotFound:
                 setting.user_log_id = None
                 setting.save()
         return channel
@@ -75,8 +76,9 @@ class Logger:
             return None
         channel = cls.bot.get_channel(channel_id)
         if channel is None:
-            channel = await cls.bot.fetch_channel(channel_id)
-            if channel is None:
+            try:
+                channel = await cls.bot.fetch_channel(channel_id)
+            except discord.errors.NotFound:
                 setting.guild_log_id = None
                 setting.save()
         return channel
@@ -97,8 +99,9 @@ class Logger:
             return None
         channel = cls.bot.get_channel(channel_id)
         if channel is None:
-            channel = await cls.bot.fetch_channel(channel_id)
-            if channel is None:
+            try:
+                channel = await cls.bot.fetch_channel(channel_id)
+            except discord.errors.NotFound:
                 setting.message_log_id = None
                 setting.save()
         return channel
