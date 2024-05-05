@@ -14,24 +14,29 @@ class ServerSettings:
     server_id: int
 
     automod_enabled: bool
-    log_id: float | None
+
+    user_log_id: int | None
+    guild_log_id: int | None
+    message_log_id: int | None
 
     def __init__(self, database: str, server_id: int):
         self.database = database
         self.server_id = server_id
 
         self.automod_enabled = True
-        self.log_id = None
+        self.user_log_id = None
 
     def load_from_database(self):
         db = DictDB(self.database)
 
         result = db.fetchall(
-            "SELECT automod, log_id FROM settings WHERE server_id = ?",
+            "SELECT * FROM settings WHERE server_id = ?",
             (self.server_id,),
         )[0]
         self.automod_enabled = result["automod"] is not None
-        self.log_id = result["log_id"]
+        self.user_log_id = result["user_log_id"]
+        self.guild_log_id = result["guild_log_id"]
+        self.message_log_id = result["message_log_id"]
         db.close()
 
     def save(self) -> None:
@@ -45,13 +50,25 @@ class ServerSettings:
             is None
         ):
             cursor.execute(
-                "INSERT INTO settings(server_id, automod, log_id) VALUES (?,?,?)",
-                (self.server_id, "yes" if self.automod_enabled else None, self.log_id),
+                "INSERT INTO settings(server_id, automod, user_log_id, guild_log_id, message_log_id) VALUES (?,?,?,?)",
+                (
+                    self.server_id,
+                    "yes" if self.automod_enabled else None,
+                    self.user_log_id,
+                    self.guild_log_id,
+                    self.message_log_id,
+                ),
             )
         else:
             cursor.execute(
-                "UPDATE settings SET automod = ?, log_id = ? WHERE server_id = ?",
-                ("yes" if self.automod_enabled else None, self.log_id, self.server_id),
+                "UPDATE settings SET automod = ?, user_log_id = ?, guild_log_id = ?, message_log_id = ? WHERE server_id = ?",
+                (
+                    "yes" if self.automod_enabled else None,
+                    self.user_log_id,
+                    self.guild_log_id,
+                    self.message_log_id,
+                    self.server_id,
+                ),
             )
         db.commit()
         cursor.close()
@@ -61,7 +78,7 @@ class ServerSettings:
 class Settings:
     bot: discord.Bot
 
-    database_path: str = ""
+    database_path: str = "databases/settings.db"
 
     server_settings: Dict[int, ServerSettings] = {}
 
@@ -87,6 +104,11 @@ class Settings:
 
     @classmethod
     def create_settings(cls, guild_id: int) -> None:
+        """Generates a settings object for a guild.
+
+        Args:
+            guild_id (int): Guild ID
+        """
         if guild_id in cls.server_settings:
             return
         cls.server_settings[guild_id] = ServerSettings(cls.database_path, guild_id)

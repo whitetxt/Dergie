@@ -15,7 +15,8 @@ def changelog_versions(self, ctx: discord.AutocompleteContext):
 class Help(commands.Cog):
     def __init__(self, bot: discord.Bot):
         self.bot = bot
-        self.ignored_cogs = ["reactions"]
+        self.ignored_cogs = []
+        self.help_ignore = ["blacklist"]
 
     def command_names(self, ctx: discord.AutocompleteContext):
         raw_cogs = dict(self.bot.cogs)
@@ -56,6 +57,8 @@ Use the buttons below to navigate!""",
             )
         ]
         for name, cog in cogs.items():
+            if name.lower() in self.help_ignore:
+                continue
             emb = discord.Embed(
                 title=f"Help for {name}",
                 colour=discord.Colour(0xFFC8DD),
@@ -64,9 +67,11 @@ Use the buttons below to navigate!""",
             for command in cog.get_commands():
                 emb.add_field(
                     name=f"/{command.name}",
-                    value=command.description
-                    if command.description
-                    else "No help provided.",
+                    value=(
+                        command.description
+                        if command.description
+                        else "No help provided."
+                    ),
                     inline=False,
                 )
             paginator_pages.append(emb)

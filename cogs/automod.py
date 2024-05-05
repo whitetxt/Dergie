@@ -94,7 +94,6 @@ If you think this is a false positive, please open a ticket in the support serve
         return
 
     @commands.Cog.listener()
-    @commands.guild_only()
     async def on_message_edit(self, before, after):
         await self.on_message(after)
 

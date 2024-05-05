@@ -106,6 +106,30 @@ class Listeners(commands.Cog):
             reason=kickAudit.reason if kickAudit.reason is not None else "No reason",
         )
 
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        await Logger.join(member.guild.id, member)
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        await Logger.leave(member.guild.id, member)
+
+    @commands.Cog.listener()
+    async def on_guild_channel_create(self, channel):
+        await Logger.channel_create(channel.guild.id, channel)
+
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel):
+        await Logger.channel_delete(channel.guild.id, channel)
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, before, after):
+        await Logger.message_edit(before, after)
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message):
+        await Logger.message_delete(message)
+
 
 def setup(bot):
     bot.add_cog(Listeners(bot))

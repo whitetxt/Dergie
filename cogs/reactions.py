@@ -33,7 +33,7 @@ class Reactions(commands.Cog):
             )
             if message.reference is None:
                 if not message.content.startswith("https://discord.com/channels"):
-                    await ctx.send(
+                    await ctx.respond(
                         f"{Emojis.failure} You didn't reply to a message or give a link."
                     )
                     return
@@ -43,7 +43,7 @@ class Reactions(commands.Cog):
                 m_id = int(message.reference.message_id)
             message = self.bot.get_message(m_id)
             if message is None:
-                await ctx.send(
+                await ctx.respond(
                     f"{Emojis.failure} Couldn't find message with ID {m_id}, maybe I don't have permissions to see the channel?"
                 )
                 return
