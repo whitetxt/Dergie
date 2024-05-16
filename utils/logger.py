@@ -315,6 +315,8 @@ class Logger:
         message_before: discord.Message,
         message_after: discord.Message,
     ):
+        if message_before.author.id == cls.bot.user.id:
+            return
         log_channel = await cls.get_message_channel(message_after.guild.id)
         if log_channel is None:
             return

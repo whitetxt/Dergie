@@ -198,6 +198,45 @@ class PrivateVC(commands.Cog):
             content=f"{Emojis.success} Your Private VC has been deleted!"
         )
 
+    @privatevc.command(description="Lists information about your Private VC.")
+    @privatevc_issetup()
+    async def info(self, ctx: discord.ApplicationContext):
+        msg = await ctx.respond("[0%] Finding voice channel...")
+        vc = None
+        for category, channels in ctx.guild.by_category():
+            if category is None or category.name != "Private VCs":
+                continue
+            for channel in channels:
+                if format_username(ctx.author) not in channel.name:
+                    continue
+                vc = channel
+                break
+            if vc is not None:
+                break
+        if vc is None:
+            await msg.edit_original_response(
+                content=f"{Emojis.failure} You don't own a private voice channel! Please create one first."
+            )
+            return
+        await msg.edit_original_response(content="[50%] Fetching information...")
+        users_allowed = vc.overwrites
+        users_allowed = [
+            user.name
+            for user, overwrite in users_allowed.items()
+            if overwrite.connect == True
+        ]
+        emb = discord.Embed(
+            title=f"{format_username(ctx.author)}'s Private VC",
+            colour=discord.Colour.blurple(),
+        )
+        emb.add_field(name="Users Allowed", value=f"{len(users_allowed)}")
+        users = "\n".join([user for user in list(users_allowed)[:20]])
+        emb.add_field(
+            name="Usernames",
+            value=f"{users}{'and more'if len(users_allowed) > 20 else ''}",
+        )
+        await msg.edit_original_response(content="", embed=emb)
+
 
 def setup(bot):
     bot.add_cog(PrivateVC(bot))

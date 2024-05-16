@@ -1,5 +1,5 @@
 import discord
-from datetime import datetime
+import datetime
 
 
 class Status:
@@ -15,7 +15,7 @@ async def send_status_message(message: discord.Message):
         return
     emb = discord.Embed(
         title="My Status :3c",
-        description=f"Last Generated at {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')} UTC",
+        description=f"Last Generated at {datetime.datetime.now(datetime.UTC).strftime('%d-%m-%Y %H:%M:%S')} UTC",
         color=discord.Color(0xF5ABB9),
     )
     emb.add_field(name="Status", value=Status.status, inline=True)

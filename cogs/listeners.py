@@ -4,6 +4,7 @@ from utils.logger import Logger
 from discord.ext import commands
 from utils.helpers import Emojis, Details, format_username
 from cogs.blacklist import Blacklisted
+from utils.settings import Settings
 
 
 class Listeners(commands.Cog):
@@ -11,6 +12,7 @@ class Listeners(commands.Cog):
 
     def __init__(self, bot: discord.Bot):
         self.bot = bot
+        self.main_error_channel = 1240792436175933470
 
     @commands.Cog.listener()
     async def on_application_command_error(
@@ -32,18 +34,18 @@ class Listeners(commands.Cog):
             await ctx.respond(
                 f"{Emojis.failure} An error has occurred, and I don't know how to handle it! I'll report this to my owner."
             )
+            channel = self.bot.get_channel(self.main_error_channel)
+            await channel.send(f"{type(error)}\n{error}\n{ctx.command}\n{ctx.message}")
         else:
             await ctx.respond(
                 f"{Emojis.failure} An error has occurred, and I don't know how to handle it! Please report this in the support server: {Details.support_url}."
             )
-            print(type(error))
-            print(error)
-            traceback.print_exception(error)
-            traceback.print_exc()
-            with open("error.log", "a") as f:
-                f.write(
-                    f"{'='*15}\nAuthor: {format_username(ctx.author)}\nCommand: {ctx.command}\nMessage: {ctx.message}\nError Type: {type(error)}\nError: {error}"
-                )
+            channel = self.bot.get_channel(self.main_error_channel)
+            await channel.send(f"{type(error)}\n{error}\n{ctx.command}\n{ctx.message}")
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        Settings.create_settings(guild.id)
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild, user):
@@ -129,6 +131,14 @@ class Listeners(commands.Cog):
     @commands.Cog.listener()
     async def on_message_delete(self, message):
         await Logger.message_delete(message)
+
+    @commands.Cog.listener()
+    async def on_invite_create(self, invite):
+        await Logger.invite_create(invite)
+
+    @commands.Cog.listener()
+    async def on_invite_delete(self, invite):
+        await Logger.invite_delete(invite)
 
 
 def setup(bot):

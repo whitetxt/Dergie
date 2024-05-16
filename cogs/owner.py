@@ -17,7 +17,7 @@ class Owner(commands.Cog):
         "owner",
         "Owner only commands.",
         checks=[commands.is_owner().predicate],
-        guild_ids=[1054875370924548167],
+        guild_ids=[1240788846401163336],
     )
 
     def cog_names(self, ctx: discord.AutocompleteContext):
@@ -47,6 +47,7 @@ class Owner(commands.Cog):
             error = e
         taken = time.perf_counter_ns() - start
         taken /= 1000
+        sys.stdout = orig
         if error is not None:
             await msg.edit_original_response(
                 content=f"An error occurred during evaluation.\nType: {type(error)}\n{error}\nTrace: {traceback.format_exc()}\nTime taken: {taken:.01f}ms"

@@ -13,11 +13,11 @@ class ServerSettings:
 
     server_id: int
 
-    automod_enabled: bool
+    automod_enabled: bool = True
 
-    user_log_id: int | None
-    guild_log_id: int | None
-    message_log_id: int | None
+    user_log_id: int | None = None
+    guild_log_id: int | None = None
+    message_log_id: int | None = None
 
     def __init__(self, database: str, server_id: int):
         self.database = database
@@ -25,6 +25,8 @@ class ServerSettings:
 
         self.automod_enabled = True
         self.user_log_id = None
+        self.guild_log_id = None
+        self.message_log_id = None
 
     def load_from_database(self):
         db = DictDB(self.database)
@@ -40,7 +42,6 @@ class ServerSettings:
         db.close()
 
     def save(self) -> None:
-        print(self.database)
         db = sqlite3.connect(self.database)
         cursor = db.cursor()
         if (
@@ -50,7 +51,7 @@ class ServerSettings:
             is None
         ):
             cursor.execute(
-                "INSERT INTO settings(server_id, automod, user_log_id, guild_log_id, message_log_id) VALUES (?,?,?,?)",
+                "INSERT INTO settings(server_id, automod, user_log_id, guild_log_id, message_log_id) VALUES (?,?,?,?,?)",
                 (
                     self.server_id,
                     "yes" if self.automod_enabled else None,

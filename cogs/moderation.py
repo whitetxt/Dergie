@@ -113,9 +113,7 @@ class Moderation(commands.Cog):
         reason: Option(
             str, description="Reason for purging", default="No reason provided."
         ),
-        delete_bot: Option(
-            bool, description="Only delete Dergie's messages", default=False
-        ),
+        delete_bot: Option(bool, description="Only delete Bot messages", default=False),
     ):
         if channel is None:
             channel: discord.TextChannel = ctx.channel
@@ -125,7 +123,7 @@ class Moderation(commands.Cog):
 
         def check(m: discord.Message):
             if delete_bot:
-                return m.author == self.bot.user
+                return m.author.bot
             else:
                 return True
 
